@@ -3,7 +3,13 @@ from django.contrib.auth.models import update_last_login
 from rest_framework_jwt.settings import api_settings
 from django.contrib.auth import authenticate
 from rest_framework import serializers
-from .models import User
+from .models import (User,
+                     Operation,
+                     Shift_result,
+                     Good,
+                     Order,
+                     Balance_modifier,
+                     Balance_modifier_history)
 
 JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
 JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
@@ -12,44 +18,51 @@ JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email', 'wms_id', 'current_balance', 'image','is_superuser')
+        fields = ('first_name', 'last_name', 'email', 'wms_id', 'current_balance', 'image', 'is_superuser')
 
 
-class UserRegistrationSerializer(serializers.ModelSerializer):
+class OperationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Operation
+        fields = ('name', 'shift_goal')
+
+
+class ShiftResultSerializer(serializers.ModelSerializer):
+    user = UserSerializer(many=False, read_only=True)
 
     class Meta:
-        model = User
-        fields = ('email', 'password', 'wms_id', 'first_name', 'last_name')
-        extra_kwargs = {'password': {'write_only': True}}
-
-    def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
-        return user
+        model = Shift_result
+        fields = ('date', 'user', 'operation', 'operation_result')
 
 
-class UserLoginSerializer(serializers.Serializer):
+class GoodSerializer(serializers.ModelSerializer):
 
-    email = serializers.CharField(max_length=255)
-    password = serializers.CharField(max_length=128, write_only=True)
-    token = serializers.CharField(max_length=255, read_only=True)
+    class Meta:
+        model = Shift_result
+        fields = '__all__'
 
-    def validate(self, data):
-        email = data.get("email", None)
-        password = data.get("password", None)
-        user = authenticate(email=email, password=password)
-        if user is None:
-            raise serializers.ValidationError(
-                'A user with this email and password is not found.'
-            )
-        try:
-            payload = JWT_PAYLOAD_HANDLER(user)
-            jwt_token = JWT_ENCODE_HANDLER(payload)
-            update_last_login(None, user)
-        except User.DoesNotExist:
-            raise serializers.ValidationError(
-                'User with given email and password does not exists'
-            )
-        return {
-            'email':user.email,
-            'token': jwt_token
-        }
+
+class OrderSerializer(serializers.ModelSerializer):
+    user = UserSerializer(many=False, read_only=True)
+    good = GoodSerializer(many=False, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ('user', 'good')
+
+
+class BalanceModifierSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Balance_modifier
+        fields = '__all__'
+
+
+class BalanceModifierHistorySerializer(serializers.ModelSerializer):
+    assigned_to = UserSerializer(many=False, read_only=True)
+    assigned_by = UserSerializer(many=False, read_only=True)
+    modifier = Balance_modifier(many=False, read_only=True)
+
+    class Meta:
+        model = Balance_modifier
+        fields = ('assigned_to', 'assigned_by', 'modifier', 'comment')
