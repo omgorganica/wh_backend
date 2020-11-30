@@ -1,5 +1,6 @@
-
+from django.conf import settings
 from django.contrib.auth.models import update_last_login
+from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework_jwt.settings import api_settings
 from django.contrib.auth import authenticate
 from rest_framework import serializers
@@ -18,51 +19,85 @@ JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email', 'wms_id', 'current_balance', 'image', 'is_superuser')
+        fields = ('id', 'first_name', 'last_name', 'email', 'wms_id', 'current_balance', 'image', 'is_superuser')
 
 
 class OperationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Operation
-        fields = ('name', 'shift_goal')
+        fields = ('id', 'name', 'shift_goal')
 
 
 class ShiftResultSerializer(serializers.ModelSerializer):
-    user = UserSerializer(many=False, read_only=True)
+    # user = UserSerializer()
+    first_name = serializers.CharField(source='user.first_name')
+    last_name = serializers.CharField(source='user.last_name')
+    operation_name = serializers.CharField(source='operation.name')
 
     class Meta:
         model = Shift_result
-        fields = ('date', 'user', 'operation', 'operation_result')
+        fields = ('id', 'date', 'user', 'first_name', 'last_name', 'operation', 'operation_name', 'operation_result')
 
 
 class GoodSerializer(serializers.ModelSerializer):
-
     class Meta:
-        model = Shift_result
-        fields = '__all__'
+        model = Good
+        fields = ('id', 'name', 'price', 'image')
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    user = UserSerializer(many=False, read_only=True)
-    good = GoodSerializer(many=False, read_only=True)
+    user = PrimaryKeyRelatedField(queryset=User.objects.all())
+    good = PrimaryKeyRelatedField(queryset=Good.objects.all())
+    # user = UserSerializer()
+    # good = GoodSerializer()
 
     class Meta:
         model = Order
-        fields = ('user', 'good')
+        fields = ('id', 'user', 'good')
+
+    def create(self, validated_data):
+        if validated_data['user'].current_balance > validated_data['good'].price :
+            user = validated_data['user']
+            order = Order.objects.create(
+                user=validated_data['user'],
+                good=validated_data['good'],
+            )
+            order.save()
+
+            user.current_balance = user.current_balance - validated_data['good'].price
+            user.save()
+            return order
+        else:
+            return
 
 
 class BalanceModifierSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Balance_modifier
         fields = '__all__'
 
 
 class BalanceModifierHistorySerializer(serializers.ModelSerializer):
-    assigned_to = UserSerializer(many=False, read_only=True)
-    assigned_by = UserSerializer(many=False, read_only=True)
-    modifier = Balance_modifier(many=False, read_only=True)
+    assigned_to = PrimaryKeyRelatedField(queryset=User.objects.all())
+    assigned_by = PrimaryKeyRelatedField(queryset=User.objects.all())
+    modifier = PrimaryKeyRelatedField(queryset=Balance_modifier.objects.all())
 
     class Meta:
-        model = Balance_modifier
-        fields = ('assigned_to', 'assigned_by', 'modifier', 'comment')
+        model = Balance_modifier_history
+        fields = ('id', 'assigned_to', 'assigned_by', 'modifier', 'comment')
+        depth = 1
+
+    def create(self, validated_data):
+        assigned_user = validated_data['assigned_to']
+        balance_modifier_history = Balance_modifier_history.objects.create(
+            assigned_to=validated_data['assigned_to'],
+            assigned_by=validated_data['assigned_by'],
+            modifier=validated_data['modifier'],
+            comment=validated_data.get('comment', '')
+        )
+        balance_modifier_history.save()
+
+        assigned_user.current_balance = assigned_user.current_balance + validated_data['modifier'].delta
+        assigned_user.save()
+
+        return balance_modifier_history

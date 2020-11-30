@@ -64,7 +64,7 @@ class Shift_result(models.Model):
     date = models.DateField()
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='shift_results')
     operation = models.ForeignKey(Operation, on_delete=models.CASCADE, related_name='shifts')
-    operation_result = models.IntegerField(default=0)
+    operation_result = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.date} {self.user} {self.operation} {self.operation_result}'
@@ -100,7 +100,7 @@ class Balance_modifier_history(models.Model):
     assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='assigned_to')
     assigned_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='assigned_by')
     modifier = models.ForeignKey(Balance_modifier, on_delete=models.CASCADE)
-    comment = models.TextField(max_length=300)
+    comment = models.TextField(max_length=300, blank=True)
 
     def __str__(self):
         return f'{self.assigned_to} {self.modifier}'
