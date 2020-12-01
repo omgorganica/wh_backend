@@ -55,21 +55,24 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ('id', 'user', 'good')
 
+    def validate(self,validated_data):
+        if validated_data['user'].current_balance < validated_data['good'].price:
+            raise serializers.ValidationError(f"You haven\'t got enough balance for this action." \
+            f"Your current balance is {validated_data['user'].current_balance}")
+        return validated_data
+
     def create(self, validated_data):
-        if validated_data['user'].current_balance > validated_data['good'].price :
-            user = validated_data['user']
-            order = Order.objects.create(
-                user=validated_data['user'],
-                good=validated_data['good'],
-            )
-            order.save()
+        User = validated_data['user']
+        Order_data = Order.objects.create(
+            user=validated_data['user'],
+            good=validated_data['good'],
+        )
+        Order_data.save()
 
-            user.current_balance = user.current_balance - validated_data['good'].price
-            user.save()
-            return order
-        else:
-            return
+        User.current_balance = User.current_balance - validated_data['good'].price
+        User.save()
 
+        return Order_data
 
 class BalanceModifierSerializer(serializers.ModelSerializer):
     class Meta:
