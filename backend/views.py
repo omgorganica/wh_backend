@@ -1,10 +1,10 @@
-from .serializers import UserSerializer, OperationSerializer, ShiftResultSerializer, GoodSerializer, OrderSerializer, \
-    BalanceModifierSerializer, BalanceModifierHistorySerializer
+from .serializers import UserSerializer, ShiftResultSerializer, GoodSerializer, OrderSerializer, \
+    BalanceModifierSerializer, BalanceModifierHistorySerializer, FileUploaderSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from .models import User, Operation, Shift_result, Good, Order, Balance_modifier, Balance_modifier_history
+from .models import User, Shift_result, Good, Order, Balance_modifier, Balance_modifier_history, FileUploader
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -12,9 +12,9 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
 
 
-class OperationViewSet(viewsets.ModelViewSet):
-    serializer_class = OperationSerializer
-    queryset = Operation.objects.all()
+# class OperationViewSet(viewsets.ModelViewSet):
+#     serializer_class = OperationSerializer
+#     queryset = Operation.objects.all()
 
 
 class ShiftViewSet(viewsets.ModelViewSet):
@@ -32,6 +32,10 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
 
 
+class FileUploaderViewSet(viewsets.ModelViewSet):
+    serializer_class = FileUploaderSerializer
+    queryset = FileUploader.objects.all()
+
 
 class BalanceModifierViewSet(viewsets.ModelViewSet):
     serializer_class = BalanceModifierSerializer
@@ -41,5 +45,3 @@ class BalanceModifierViewSet(viewsets.ModelViewSet):
 class BalanceModifierHistoryViewSet(viewsets.ModelViewSet):
     serializer_class = BalanceModifierHistorySerializer
     queryset = Balance_modifier_history.objects.all()
-
-

@@ -2,7 +2,10 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
+
+'''
+Custom user manager
+'''
 
 
 class CustomUserManager(BaseUserManager):
@@ -11,7 +14,7 @@ class CustomUserManager(BaseUserManager):
         Create and save a User with the given email and password.
         """
         if not email:
-            raise ValueError(_('The Email must be set'))
+            raise ValueError('The Email must be set')
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
@@ -27,10 +30,15 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_active', True)
 
         if extra_fields.get('is_staff') is not True:
-            raise ValueError(_('Superuser must have is_staff=True.'))
+            raise ValueError('Superuser must have is_staff=True.')
         if extra_fields.get('is_superuser') is not True:
-            raise ValueError(_('Superuser must have is_superuser=True.'))
+            raise ValueError('Superuser must have is_superuser=True.')
         return self.create_user(email, password, **extra_fields)
+
+
+'''
+Custom user model
+'''
 
 
 class User(AbstractUser):
@@ -52,19 +60,18 @@ class User(AbstractUser):
         return f'{self.first_name} {self.last_name} {self.wms_id} '
 
 
-class Operation(models.Model):
-    name = models.CharField(max_length=50)
-    shift_goal = models.IntegerField(blank=False)
-
-    def __str__(self):
-        return self.name
+class FileUploader(models.Model):
+    file = models.FileField(upload_to='files/', default='None')
+    upload_date = models.DateTimeField(auto_now=True, db_index=True)
 
 
 class Shift_result(models.Model):
     date = models.DateField()
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='shift_results')
-    operation = models.ForeignKey(Operation, on_delete=models.CASCADE, related_name='shifts')
-    operation_result = models.BooleanField(default=False)
+    picking = models.IntegerField()
+    transportations = models.IntegerField()
+    loading = models.IntegerField()
+    result = models.DecimalField(max_digits=3, decimal_places=1)
 
     def __str__(self):
         return f'{self.date} {self.user} {self.operation} {self.operation_result}'
