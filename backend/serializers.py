@@ -4,6 +4,7 @@ from pprint import pprint
 
 from django.conf import settings
 from django.contrib.auth.models import update_last_login
+from .excel_handler import handle_excel
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework_jwt.settings import api_settings
 from django.contrib.auth import authenticate
@@ -26,11 +27,6 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'first_name', 'last_name', 'email', 'wms_id', 'current_balance', 'image', 'is_superuser')
 
-
-# class OperationSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Operation
-#         fields = ('id', 'name', 'shift_goal')
 
 
 class ShiftResultSerializer(serializers.ModelSerializer):
@@ -114,11 +110,9 @@ class FileUploaderSerializer(serializers.ModelSerializer):
         fields = ('file', 'upload_date')
 
     def validate(self, data):
-        pprint('!!!!!!!!!!')
-        pprint(data['file'].name)
-        pprint(type(data['file'].name))
-        pprint('!!!!!!!!!!')
-
+        '''
+        Проверка на расширение файла
+        '''
         extension = data['file'].name.split('.')[1]
         allowed_extensions = ['xls', 'xlsx']
         if extension not in allowed_extensions:
