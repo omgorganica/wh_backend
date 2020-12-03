@@ -10,11 +10,11 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from .models import (User,
-                     Shift_result,
+                     ShiftResult,
                      Good,
                      Order,
-                     Balance_modifier,
-                     Balance_modifier_history,
+                     BalanceModifier,
+                     BalanceModifierHistory,
                      FileUploader)
 
 JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
@@ -34,7 +34,7 @@ class ShiftResultSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(source='user.last_name')
 
     class Meta:
-        model = Shift_result
+        model = ShiftResult
         fields = ('id', 'date', 'user', 'first_name', 'last_name', 'operation', 'operation_result')
 
 
@@ -73,23 +73,23 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class BalanceModifierSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Balance_modifier
+        model = BalanceModifier
         fields = '__all__'
 
 
 class BalanceModifierHistorySerializer(serializers.ModelSerializer):
     assigned_to = PrimaryKeyRelatedField(queryset=User.objects.all())
     assigned_by = PrimaryKeyRelatedField(queryset=User.objects.all())
-    modifier = PrimaryKeyRelatedField(queryset=Balance_modifier.objects.all())
+    modifier = PrimaryKeyRelatedField(queryset=BalanceModifier.objects.all())
 
     class Meta:
-        model = Balance_modifier_history
+        model = BalanceModifierHistory
         fields = ('id', 'assigned_to', 'assigned_by', 'modifier', 'comment')
         depth = 1
 
     def create(self, validated_data):
         assigned_user = validated_data['assigned_to']
-        balance_modifier_history = Balance_modifier_history.objects.create(
+        balance_modifier_history = BalanceModifierHistory.objects.create(
             assigned_to=validated_data['assigned_to'],
             assigned_by=validated_data['assigned_by'],
             modifier=validated_data['modifier'],

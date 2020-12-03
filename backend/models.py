@@ -65,16 +65,16 @@ class FileUploader(models.Model):
     upload_date = models.DateTimeField(auto_now=True, db_index=True)
 
 
-class Shift_result(models.Model):
+class ShiftResult(models.Model):
     date = models.DateField()
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='shift_results')
     picking = models.IntegerField()
     transportations = models.IntegerField()
     loading = models.IntegerField()
-    result = models.DecimalField(max_digits=3, decimal_places=1)
+    result = models.DecimalField(max_digits=3, decimal_places=1, default=0)
 
     def __str__(self):
-        return f'{self.date} {self.user} {self.operation} {self.operation_result}'
+        return f'{self.date} {self.user} '
 
 
 class Good(models.Model):
@@ -94,7 +94,7 @@ class Order(models.Model):
         return f'{self.user} {self.good}'
 
 
-class Balance_modifier(models.Model):
+class BalanceModifier(models.Model):
     name = models.CharField(max_length=255)
     delta = models.IntegerField()
     image = models.ImageField(upload_to='images/', default='None')
@@ -103,10 +103,10 @@ class Balance_modifier(models.Model):
         return f'{self.name} {self.delta}'
 
 
-class Balance_modifier_history(models.Model):
+class BalanceModifierHistory(models.Model):
     assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='assigned_to')
     assigned_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='assigned_by')
-    modifier = models.ForeignKey(Balance_modifier, on_delete=models.CASCADE)
+    modifier = models.ForeignKey(BalanceModifier, on_delete=models.CASCADE)
     comment = models.TextField(max_length=300, blank=True)
 
     def __str__(self):

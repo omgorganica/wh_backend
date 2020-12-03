@@ -1,9 +1,11 @@
+from pprint import pprint
+
 import pandas as pd
 from datetime import timedelta
 
 
-def handle_excel(file):
-    df = pd.read_excel(file)
+def handle_excel(path):
+    df = pd.read_excel(path)
     df = df[['Work Date', 'Time From', 'Pers No', 'Overall Transports', 'Boxes Picked Picking',
              'Loadings']].sort_values(by=['Work Date', 'Time From'], ascending=[True, True]).reset_index(drop=True)
 
@@ -21,3 +23,8 @@ def handle_excel(file):
     final = df.groupby(['Pers No', 'DATE'], sort=True).sum().reset_index()
     final_dict = final.to_dict(orient='records')
     return final_dict
+
+
+if __name__ == '__main__':
+    i = handle_excel('../media/files/test.xlsx')
+    pprint(i)
