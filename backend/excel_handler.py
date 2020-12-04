@@ -26,5 +26,4 @@ def handle_excel(path):
 
 
 if __name__ == '__main__':
-    i = handle_excel('../media/files/test.xlsx')
-    pprint(i)
+ pass

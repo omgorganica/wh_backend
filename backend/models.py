@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
@@ -42,6 +43,7 @@ Custom user model
 
 
 class User(AbstractUser):
+
     username = None
 
     wms_id = models.CharField(max_length=5, blank=False, unique=True)
@@ -98,14 +100,17 @@ class BalanceModifier(models.Model):
     name = models.CharField(max_length=255)
     delta = models.IntegerField()
     image = models.ImageField(upload_to='images/', default='None')
+    for_shift_result = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.name} {self.delta}'
 
 
 class BalanceModifierHistory(models.Model):
-    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='assigned_to')
-    assigned_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='assigned_by')
+    User = get_user_model()
+    assigned_to = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assigned_to')
+    assigned_by = models.ForeignKey(User, on_delete=models.CASCADE,
+                                    related_name='assigned_by', null=True)
     modifier = models.ForeignKey(BalanceModifier, on_delete=models.CASCADE)
     comment = models.TextField(max_length=300, blank=True)
 

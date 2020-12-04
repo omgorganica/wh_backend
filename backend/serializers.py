@@ -86,19 +86,19 @@ class BalanceModifierHistorySerializer(serializers.ModelSerializer):
         model = BalanceModifierHistory
         fields = ('id', 'assigned_to', 'assigned_by', 'modifier', 'comment')
         depth = 1
-
+    '''
+    Из POST запроса берем данные для изменения баланса assigned_to юзера на основании значения modifier.delta
+    '''
     def create(self, validated_data):
         assigned_user = validated_data['assigned_to']
         balance_modifier_history = BalanceModifierHistory.objects.create(
-            assigned_to=validated_data['assigned_to'],
-            assigned_by=validated_data['assigned_by'],
+            assigned_to=validated_data.get['assigned_to'],
+            assigned_by=validated_data.get('assigned_by', None),
             modifier=validated_data['modifier'],
             comment=validated_data.get('comment', '')
         )
         balance_modifier_history.save()
-
         assigned_user.current_balance = assigned_user.current_balance + validated_data['modifier'].delta
-        assigned_user.save()
 
         return balance_modifier_history
 

@@ -5,7 +5,6 @@ from django.conf import settings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 SECRET_KEY = '4d3%1!amu#0p3yq=aex!y_y(wzk-7ck5!a+@d2@)49u4_4^%6h'
 DEBUG = True
 ALLOWED_HOSTS = ['127.0.0.1']
@@ -33,8 +32,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
-
 
 ROOT_URLCONF = 'badges.urls'
 
@@ -98,7 +95,6 @@ REST_FRAMEWORK = {
     )
 }
 
-
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
@@ -135,7 +131,7 @@ DJOSER = {
     'SERIALIZERS': {},
 }
 
-#SMTP
+# SMTP
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = "rupeewhnotifications@gmail.com"
@@ -161,3 +157,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+WORK_GOAL = {
+    'picking': 1200,
+    'shifting': 240,
+    'loadings': 11
+}
