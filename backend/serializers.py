@@ -99,7 +99,7 @@ class BalanceModifierHistorySerializer(serializers.ModelSerializer):
         )
         balance_modifier_history.save()
         assigned_user.current_balance = assigned_user.current_balance + validated_data['modifier'].delta
-
+        assigned_user.save(update_fields=['current_balance'])
         return balance_modifier_history
 
 

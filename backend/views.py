@@ -1,7 +1,4 @@
-from pprint import pprint
-
 from django.db.models import F
-
 from .serializers import UserSerializer, ShiftResultSerializer, GoodSerializer, OrderSerializer, \
     BalanceModifierSerializer, BalanceModifierHistorySerializer, FileUploaderSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -11,6 +8,7 @@ from .models import User, ShiftResult, Good, Order, BalanceModifier, BalanceModi
 from .excel_handler import handle_excel
 from django.conf import settings
 import os
+
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
@@ -41,9 +39,12 @@ class FileUploaderViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             serializer.save()
             filename = os.path.split(serializer.data['file'])[1]
-            results = handle_excel(os.path.join(settings.BASE_DIR, 'media\\files', filename)) # Список словарей, содержащих итоги смены каждого сотрудника
-            balance_modifier = BalanceModifier.objects.get(for_shift_result=True)  # Единственный модификатор, использующийся автоматически для итогов смены
-            superuser = User.objects.filter(is_superuser=True).first()  #Не принципиально какой superuser будет числится в assigned_by У BalanceModifierHistory
+            results = handle_excel(os.path.join(settings.BASE_DIR, 'media\\files',
+                                                filename))  # Список словарей, содержащих итоги смены каждого сотрудника
+            balance_modifier = BalanceModifier.objects.get(
+                for_shift_result=True)  # Единственный модификатор, использующийся автоматически для итогов смены
+            superuser = User.objects.filter(
+                is_superuser=True).first()  # Не принципиально какой superuser будет числится в assigned_by У BalanceModifierHistory
             for item in results:
                 try:
                     picking = item['Boxes Picked Picking'] / settings.WORK_GOAL['picking']
@@ -51,19 +52,14 @@ class FileUploaderViewSet(viewsets.ModelViewSet):
                     loading = item['Loadings'] / settings.WORK_GOAL['loadings']
                     result = round((picking + shifting + loading), 1)
                     user = User.objects.get(wms_id=item['Pers No'])
-                    '''
-                    Создание результата смены для каждого сотрудника. Если смена уже есть- обновить данные
-                    '''
-                    ShiftResult.objects.update_or_create(date=item['DATE'],user=user,defaults={
-                        'picking':item['Boxes Picked Picking'],
-                        'transportations':item['Overall Transports'],
-                        'loading':item['Loadings'],'result':result})
+
                     '''
                     Если суммарная производительность по 3 операциям сотрудника за смену больше 1,
-                    то создается новый модификатор баланса, добавляющий ему на счет виртуальную валюту
+                    то создается новый модификатор баланса, добавляющий ему на счет виртуальную валюту.
+                    Модификатор увеличивается пропорционально результату смены
                     '''
                     if result > 1:
-                        user.current_balance =  F ('current_balance') + balance_modifier.delta
+                        user.current_balance = F('current_balance') + balance_modifier.delta * result
                         user.save(update_fields=['current_balance'])
 
                         BalanceModifierHistory.objects.create(
@@ -72,6 +68,16 @@ class FileUploaderViewSet(viewsets.ModelViewSet):
                             modifier=balance_modifier,
                             comment='Автоматическое пополнение по итогам смены'
                         )
+
+                    '''
+                    Создание результата смены для каждого сотрудника. Если смена уже есть- обновить данные
+                    '''
+
+                    ShiftResult.objects.update_or_create(date=item['DATE'], user=user, defaults={
+                        'picking': item['Boxes Picked Picking'],
+                        'transportations': item['Overall Transports'],
+                        'loading': item['Loadings'], 'result': result})
+
                 except Exception as e:
                     print(e)
             return Response(serializer.data)
