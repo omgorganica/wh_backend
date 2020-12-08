@@ -1,4 +1,7 @@
 from pprint import pprint
+
+from django.db.models import F
+
 from .serializers import UserSerializer, ShiftResultSerializer, GoodSerializer, OrderSerializer, \
     BalanceModifierSerializer, BalanceModifierHistorySerializer, FileUploaderSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -49,22 +52,20 @@ class FileUploaderViewSet(viewsets.ModelViewSet):
                     result = round((picking + shifting + loading), 1)
                     user = User.objects.get(wms_id=item['Pers No'])
                     '''
-                    Создание результата смены для каждого сотрудника 
+                    Создание результата смены для каждого сотрудника. Если смена уже есть- обновить данные
                     '''
-                    ShiftResult.objects.create(
-                        date=item['DATE'],
-                        user=user,
-                        picking=item['Boxes Picked Picking'],
-                        transportations=item['Overall Transports'],
-                        loading=item['Loadings'],
-                        result=result
-                    )
+                    ShiftResult.objects.update_or_create(date=item['DATE'],user=user,defaults={
+                        'picking':item['Boxes Picked Picking'],
+                        'transportations':item['Overall Transports'],
+                        'loading':item['Loadings'],'result':result})
                     '''
                     Если суммарная производительность по 3 операциям сотрудника за смену больше 1,
                     то создается новый модификатор баланса, добавляющий ему на счет виртуальную валюту
                     '''
                     if result > 1:
-                        user.current_balance = User.current_balance + balance_modifier.delta
+                        user.current_balance =  F ('current_balance') + balance_modifier.delta
+                        user.save(update_fields=['current_balance'])
+
                         BalanceModifierHistory.objects.create(
                             assigned_by=superuser,
                             assigned_to=user,
