@@ -25,18 +25,16 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'first_name', 'last_name', 'email', 'wms_id', 'current_balance', 'image', 'is_superuser')
-
+        ref_name = 'UserSerializer'
 
 
 class ShiftResultSerializer(serializers.ModelSerializer):
-    # user = UserSerializer()
     first_name = serializers.CharField(source='user.first_name')
     last_name = serializers.CharField(source='user.last_name')
 
     class Meta:
         model = ShiftResult
-        fields = ('id', 'date', 'user', 'first_name', 'last_name', 'operation', 'operation_result')
-
+        fields = ('id', 'date', 'user', 'first_name', 'last_name', 'transportations', 'picking', 'loading')
 
 class GoodSerializer(serializers.ModelSerializer):
     class Meta:
