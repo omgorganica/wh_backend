@@ -43,14 +43,12 @@ class FileUploaderViewSet(viewsets.ModelViewSet):
 			try:
 				results = handle_excel(os.path.join(settings.BASE_DIR, 'media\\files',
 													filename))  # Список словарей, содержащих итоги смены каждого сотрудника
-			except Exception as e:
-				logging.error(e)
-			balance_modifier = BalanceModifier.objects.get(
-				for_shift_result=True)  # Единственный модификатор, использующийся автоматически для итогов смены
-			superuser = User.objects.filter(
-				is_superuser=True).first()  # Не принципиально какой superuser будет числится в assigned_by У BalanceModifierHistory
-			for item in results:
-				try:
+				balance_modifier = BalanceModifier.objects.get(
+					for_shift_result=True)  # Единственный модификатор, использующийся автоматически для итогов смены
+				superuser = User.objects.filter(
+					is_superuser=True).first()  # Не принципиально какой superuser будет числится в assigned_by У BalanceModifierHistory
+				for item in results:
+
 					picking = item['Boxes Picked Picking'] / settings.WORK_GOAL['picking']
 					shifting = item['Overall Transports'] / settings.WORK_GOAL['shifting']
 					loading = item['Loadings'] / settings.WORK_GOAL['loadings']
@@ -58,11 +56,11 @@ class FileUploaderViewSet(viewsets.ModelViewSet):
 					user = User.objects.get(wms_id=item['Pers No'])
 
 					'''
-                    Если суммарная производительность по 3 операциям сотрудника за смену больше 1,
-                    то создается новый модификатор баланса, добавляющий ему на счет виртуальную валюту.
-                    Модификатор увеличивается пропорционально результату смены
-                    '''
-					if result > 1:
+					Если суммарная производительность по 3 операциям сотрудника за смену больше 1,
+					то создается новый модификатор баланса, добавляющий ему на счет виртуальную валюту.
+					Модификатор увеличивается пропорционально результату смены
+					'''
+					if result > 1 and not ShiftResult.objects.get(date=item['DATE'], user=user):
 						user.current_balance = F('current_balance') + balance_modifier.delta * result
 						user.save(update_fields=['current_balance'])
 
@@ -73,18 +71,21 @@ class FileUploaderViewSet(viewsets.ModelViewSet):
 							comment='Автоматическое пополнение по итогам смены'
 						)
 
-					'''
-                    Создание результата смены для каждого сотрудника. Если смена уже есть- обновить данные
-                    '''
+						'''
+						Создание результата смены для каждого сотрудника. Если смена уже есть- обновить данные
+						'''
 
-					ShiftResult.objects.update_or_create(date=item['DATE'], user=user, defaults={
-						'picking': item['Boxes Picked Picking'],
-						'transportations': item['Overall Transports'],
-						'loading': item['Loadings'], 'result': result})
+						ShiftResult.objects.update_or_create(date=item['DATE'], user=user, defaults={
+							'picking': item['Boxes Picked Picking'],
+							'transportations': item['Overall Transports'],
+							'loading': item['Loadings'], 'result': result})
 
-				except Exception as e:
-					print(e)
-			return Response(serializer.data)
+					else:
+						logging.error(f'User {user} for date {item["DATE"]} was already uploaded')
+			except Exception as e:
+				logging.error(e)
+
+		return Response(serializer.data)
 
 
 class BalanceModifierViewSet(viewsets.ModelViewSet):
