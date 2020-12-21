@@ -11,9 +11,6 @@ Custom user manager
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password, **extra_fields):
-        """
-        Create and save a User with the given email and password.
-        """
         if not email:
             raise ValueError('The Email must be set')
         email = self.normalize_email(email)
@@ -35,11 +32,6 @@ class CustomUserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
         return self.create_user(email, password, **extra_fields)
-
-
-'''
-Custom user model
-'''
 
 
 class User(AbstractUser):
@@ -69,7 +61,7 @@ class FileUploader(models.Model):
 
 class ShiftResult(models.Model):
     date = models.DateField()
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='shift_results')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='shift_results')
     picking = models.IntegerField()
     transportations = models.IntegerField()
     loading = models.IntegerField()
@@ -89,8 +81,8 @@ class Good(models.Model):
 
 
 class Order(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='orders')
-    good = models.ForeignKey(Good, on_delete=models.CASCADE, related_name='orders')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='orders')
+    good = models.ForeignKey(Good, on_delete=models.SET_NULL, null=True, related_name='orders')
 
     def __str__(self):
         return f'{self.user} {self.good}'
@@ -108,10 +100,10 @@ class BalanceModifier(models.Model):
 
 class BalanceModifierHistory(models.Model):
     User = get_user_model()
-    assigned_to = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assigned_to')
-    assigned_by = models.ForeignKey(User, on_delete=models.CASCADE,
-                                    related_name='assigned_by', null=True)
-    modifier = models.ForeignKey(BalanceModifier, on_delete=models.CASCADE)
+    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='assigned_to')
+    assigned_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
+                                    related_name='assigned_by')
+    modifier = models.ForeignKey(BalanceModifier, on_delete=models.SET_NULL, null=True,)
     comment = models.TextField(max_length=300, blank=True)
 
     def __str__(self):
