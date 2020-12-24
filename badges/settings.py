@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'djoser',
     'rest_framework.authtoken',
     'drf_yasg',
+    'django_filters',
 ]
 AUTH_USER_MODEL = 'backend.User'
 MIDDLEWARE = [
@@ -93,7 +94,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
-    )
+    ),
+    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',)
 }
 
 SIMPLE_JWT = {

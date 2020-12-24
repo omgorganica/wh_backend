@@ -1,4 +1,6 @@
 from django.db.models import F
+import os
+import logging
 from .serializers import UserSerializer, ShiftResultSerializer, GoodSerializer, OrderSerializer, \
 	BalanceModifierSerializer, BalanceModifierHistorySerializer, FileUploaderSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -7,8 +9,6 @@ from rest_framework.response import Response
 from .models import User, ShiftResult, Good, Order, BalanceModifier, BalanceModifierHistory, FileUploader
 from .excel_handler import handle_excel
 from django.conf import settings
-import os
-import logging
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -19,6 +19,7 @@ class UserViewSet(viewsets.ModelViewSet):
 class ShiftViewSet(viewsets.ModelViewSet):
 	serializer_class = ShiftResultSerializer
 	queryset = ShiftResult.objects.all()
+	filterset_fields = ('user','date')
 
 
 class GoodsViewSet(viewsets.ModelViewSet):

@@ -36,6 +36,7 @@ class ShiftResultSerializer(serializers.ModelSerializer):
         model = ShiftResult
         fields = ('id', 'date', 'user', 'first_name', 'last_name', 'transportations', 'picking', 'loading')
 
+
 class GoodSerializer(serializers.ModelSerializer):
     class Meta:
         model = Good
