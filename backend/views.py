@@ -16,7 +16,7 @@ class UserViewSet(viewsets.ModelViewSet):
 	queryset = User.objects.all()
 
 
-class ShiftViewSet(viewsets.ModelViewSet):
+class ShiftViewSet(viewsets.ViewSet):
 	serializer_class = ShiftResultSerializer
 	queryset = ShiftResult.objects.all()
 	filterset_fields = ('user','date')
