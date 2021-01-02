@@ -2,14 +2,14 @@ from django.conf.urls.static import static
 from django.conf import settings
 
 from .serializers import FileUploaderSerializer
-from .views import UserViewSet, ShiftViewSet, GoodsViewSet, OrderViewSet, BalanceModifierViewSet, \
+from .views import UserViewSet, ShiftsViewSet, GoodsViewSet, OrderViewSet, BalanceModifierViewSet, \
     BalanceModifierHistoryViewSet, FileUploaderViewSet
 
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
 router.register('users', UserViewSet, basename='user')
-router.register('shifts', ShiftViewSet, basename='shifts')
+router.register('shifts', ShiftsViewSet, basename='shifts')
 router.register('goods', GoodsViewSet, basename='goods')
 router.register('orders', OrderViewSet, basename='orders')
 router.register('balance_modifier', BalanceModifierViewSet, basename='balance_modifier')

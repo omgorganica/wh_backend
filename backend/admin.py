@@ -1,8 +1,8 @@
 from django.contrib import admin
-from .models import User, ShiftResult, Good, Order, BalanceModifier, FileUploader
+from .models import User, Shift, Good, Order, BalanceModifier, FileUploader
 
 
-admin.site.register(ShiftResult)
+admin.site.register(Shift)
 admin.site.register(User)
 admin.site.register(Good)
 admin.site.register(Order)

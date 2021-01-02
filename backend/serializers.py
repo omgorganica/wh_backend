@@ -10,7 +10,7 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from .models import (User,
-                     ShiftResult,
+                     Shift,
                      Good,
                      Order,
                      BalanceModifier,
@@ -28,12 +28,12 @@ class UserSerializer(serializers.ModelSerializer):
         ref_name = 'UserSerializer'
 
 
-class ShiftResultSerializer(serializers.ModelSerializer):
+class ShiftsResultSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='user.first_name')
     last_name = serializers.CharField(source='user.last_name')
 
     class Meta:
-        model = ShiftResult
+        model = Shift
         fields = ('id', 'date', 'user', 'first_name', 'last_name', 'transportations', 'picking', 'loading')
 
 

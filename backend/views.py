@@ -1,12 +1,12 @@
 from django.db.models import F
 import os
 import logging
-from .serializers import UserSerializer, ShiftResultSerializer, GoodSerializer, OrderSerializer, \
+from .serializers import UserSerializer, ShiftsResultSerializer, GoodSerializer, OrderSerializer, \
 	BalanceModifierSerializer, BalanceModifierHistorySerializer, FileUploaderSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
-from .models import User, ShiftResult, Good, Order, BalanceModifier, BalanceModifierHistory, FileUploader
+from .models import User, Shift, Good, Order, BalanceModifier, BalanceModifierHistory, FileUploader
 from .excel_handler import handle_excel
 from django.conf import settings
 
@@ -16,9 +16,9 @@ class UserViewSet(viewsets.ModelViewSet):
 	queryset = User.objects.all()
 
 
-class ShiftViewSet(viewsets.ViewSet):
-	serializer_class = ShiftResultSerializer
-	queryset = ShiftResult.objects.all()
+class ShiftsViewSet(viewsets.ModelViewSet):
+	serializer_class = ShiftsResultSerializer
+	queryset = Shift.objects.all()
 	filterset_fields = ('user','date')
 
 
@@ -42,14 +42,13 @@ class FileUploaderViewSet(viewsets.ModelViewSet):
 			serializer.save()
 			filename = os.path.split(serializer.data['file'])[1]
 			try:
-				results = handle_excel(os.path.join(settings.BASE_DIR, 'media\\files',
+				results = handle_excel(os.path.join(settings.BASE_DIR, 'media/files',
 													filename))  # Список словарей, содержащих итоги смены каждого сотрудника
-				balance_modifier = BalanceModifier.objects.get(
-					for_shift_result=True)  # Единственный модификатор, использующийся автоматически для итогов смены
+				balance_modifier = BalanceModifier.objects.filter(
+					for_shift_result=True).first()  # Единственный модификатор, использующийся автоматически для итогов смены
 				superuser = User.objects.filter(
 					is_superuser=True).first()  # Не принципиально какой superuser будет числится в assigned_by У BalanceModifierHistory
 				for item in results:
-
 					picking = item['Boxes Picked Picking'] / settings.WORK_GOAL['picking']
 					shifting = item['Overall Transports'] / settings.WORK_GOAL['shifting']
 					loading = item['Loadings'] / settings.WORK_GOAL['loadings']
@@ -61,7 +60,7 @@ class FileUploaderViewSet(viewsets.ModelViewSet):
 					то создается новый модификатор баланса, добавляющий ему на счет виртуальную валюту.
 					Модификатор увеличивается пропорционально результату смены
 					'''
-					if result > 1 and not ShiftResult.objects.get(date=item['DATE'], user=user):
+					if result > 1 and not Shift.objects.filter(date=item['DATE'], user=user).exists():
 						user.current_balance = F('current_balance') + balance_modifier.delta * result
 						user.save(update_fields=['current_balance'])
 
@@ -76,7 +75,7 @@ class FileUploaderViewSet(viewsets.ModelViewSet):
 						Создание результата смены для каждого сотрудника. Если смена уже есть- обновить данные
 						'''
 
-						ShiftResult.objects.update_or_create(date=item['DATE'], user=user, defaults={
+						Shift.objects.update_or_create(date=item['DATE'], user=user, defaults={
 							'picking': item['Boxes Picked Picking'],
 							'transportations': item['Overall Transports'],
 							'loading': item['Loadings'], 'result': result})

@@ -51,7 +51,10 @@ class User(AbstractUser):
     objects = CustomUserManager()
 
     def __str__(self):
-        return f'{self.first_name} {self.last_name} {self.wms_id} '
+        return f'{self.first_name} {self.last_name} {self.wms_id} {self.current_balance} '
+
+    class Meta:
+        ordering = ['-current_balance']
 
 
 class FileUploader(models.Model):
@@ -59,9 +62,9 @@ class FileUploader(models.Model):
     upload_date = models.DateTimeField(auto_now=True, db_index=True)
 
 
-class ShiftResult(models.Model):
+class Shift(models.Model):
     date = models.DateField()
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='shift_results')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='shifts')
     picking = models.IntegerField()
     transportations = models.IntegerField()
     loading = models.IntegerField()
