@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from .models import User, Shift, Good, Order, BalanceModifier, BalanceModifierHistory, FileUploader
 from .excel_handler import handle_excel
 from django.conf import settings
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 
 class UserViewSet(viewsets.ModelViewSet):

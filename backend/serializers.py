@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import update_last_login
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework_jwt.settings import api_settings
+from djoser.serializers import UserSerializer as DjoserUserSerializer
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
@@ -116,3 +117,8 @@ class FileUploaderSerializer(serializers.ModelSerializer):
         if extension not in allowed_extensions:
             raise ValidationError(f"File extension *.{extension} is not allowed. Please use {allowed_extensions}")
         return data
+
+
+class CustomUserSerializer(DjoserUserSerializer):
+    class Meta(DjoserUserSerializer.Meta):
+        fields = ('id', 'first_name', 'last_name', 'email', 'wms_id', 'current_balance', 'image', 'is_superuser')

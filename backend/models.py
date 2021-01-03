@@ -37,7 +37,6 @@ class CustomUserManager(BaseUserManager):
 class User(AbstractUser):
 
     username = None
-
     wms_id = models.CharField(max_length=5, blank=False, unique=True)
     first_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255, blank=True)
