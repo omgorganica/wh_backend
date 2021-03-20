@@ -1,15 +1,17 @@
+import django_filters
 from django.db.models import F
 import os
 import logging
+from django_filters.rest_framework import FilterSet
+
 from .serializers import UserSerializer, ShiftsResultSerializer, GoodSerializer, OrderSerializer, \
-	BalanceModifierSerializer, BalanceModifierHistorySerializer, FileUploaderSerializer
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework import viewsets, status, permissions
+	BalanceModifierSerializer, BalanceModifierHistorySerializer, FileUploaderSerializer, MeanStatSeralizer
+from rest_framework import viewsets, status, permissions, mixins
 from rest_framework.response import Response
 from .models import User, Shift, Good, Order, BalanceModifier, BalanceModifierHistory, FileUploader
 from .excel_handler import handle_excel
 from django.conf import settings
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework import generics
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -17,10 +19,25 @@ class UserViewSet(viewsets.ModelViewSet):
 	queryset = User.objects.all()
 
 
+class ShiftFilter(FilterSet):
+	timestamp_gte = django_filters.DateTimeFilter(field_name="date", lookup_expr='gte')
+	timestamp_lte = django_filters.DateTimeFilter(field_name="date", lookup_expr='lte')
+	user = django_filters.NumberFilter(field_name='user', lookup_expr='exact')
+
+	class Meta:
+		model = Shift
+		fields = ['user', 'timestamp_gte', 'timestamp_lte']
+
+
 class ShiftsViewSet(viewsets.ModelViewSet):
 	serializer_class = ShiftsResultSerializer
+	queryset = Shift.objects.all().order_by('-date')
+	filterset_class = ShiftFilter
+
+
+class ShiftsAvgView(viewsets.ModelViewSet):
+	serializer_class = MeanStatSeralizer
 	queryset = Shift.objects.all()
-	filterset_fields = ('user','date')
 
 
 class GoodsViewSet(viewsets.ModelViewSet):
@@ -30,7 +47,10 @@ class GoodsViewSet(viewsets.ModelViewSet):
 
 class OrderViewSet(viewsets.ModelViewSet):
 	serializer_class = OrderSerializer
-	queryset = Order.objects.all()
+
+	def get_queryset(self):
+		user = self.request.user
+		return Order.objects.filter(user=user).order_by('status', '-created')
 
 
 class FileUploaderViewSet(viewsets.ModelViewSet):
@@ -61,7 +81,7 @@ class FileUploaderViewSet(viewsets.ModelViewSet):
 					то создается новый модификатор баланса, добавляющий ему на счет виртуальную валюту.
 					Модификатор увеличивается пропорционально результату смены
 					'''
-					if result > 1 and not Shift.objects.filter(date=item['DATE'], user=user).exists():
+					if not Shift.objects.filter(date=item['DATE'], user=user).exists():
 						user.current_balance = F('current_balance') + balance_modifier.delta * result
 						user.save(update_fields=['current_balance'])
 
@@ -96,9 +116,19 @@ class BalanceModifierViewSet(viewsets.ModelViewSet):
 
 class BalanceModifierHistoryViewSet(viewsets.ModelViewSet):
 	serializer_class = BalanceModifierHistorySerializer
-	queryset = BalanceModifierHistory.objects.all()
+
+	# queryset = BalanceModifierHistory.objects.all()
+
+	def get_queryset(self):
+		user = self.request.user
+		if user.is_superuser or user.is_staff:
+			return BalanceModifierHistory.objects.all()
+		else:
+			return BalanceModifierHistory.objects.filter(assigned_to=user)
 
 	def create(self, request):
 		serializer = FileUploaderSerializer(data=request.data)
 		if serializer.is_valid():
 			serializer.save()
+
+

@@ -3,6 +3,8 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from django.conf import settings
+from django.db.models import Avg
+from model_utils import Choices
 
 '''
 Custom user manager
@@ -43,6 +45,7 @@ class User(AbstractUser):
     email = models.EmailField(blank=False, unique=True)
     current_balance = models.IntegerField(default=0)
     image = models.ImageField(upload_to='images/', default='None')
+    is_active = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['wms_id']
@@ -70,7 +73,8 @@ class Shift(models.Model):
     result = models.DecimalField(max_digits=3, decimal_places=1, default=0)
 
     def __str__(self):
-        return f'{self.date} {self.user} '
+        return f'{self.date} {self.user.first_name} {self.user.last_name} Result {self.result} pick {self.picking}'
+
 
 
 class Good(models.Model):
@@ -85,9 +89,12 @@ class Good(models.Model):
 class Order(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='orders')
     good = models.ForeignKey(Good, on_delete=models.SET_NULL, null=True, related_name='orders')
+    STATUS = Choices('active', 'finished')
+    status = models.CharField(choices=STATUS, default=STATUS.active, max_length=20)
+    created = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'{self.user} {self.good}'
+        return f'{self.user} {self.good} {self.status}'
 
 
 class BalanceModifier(models.Model):
@@ -107,6 +114,7 @@ class BalanceModifierHistory(models.Model):
                                     related_name='assigned_by')
     modifier = models.ForeignKey(BalanceModifier, on_delete=models.SET_NULL, null=True,)
     comment = models.TextField(max_length=300, blank=True)
+    created = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f'{self.assigned_to} {self.modifier}'
